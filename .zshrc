@@ -101,9 +101,86 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 
-# Added
+#Mine
 export EDITOR=nvim
-export PATH=$HOME/bin:$PATH
+export PATH=$HOME/bin:$HOME/.local/bin:$PATH
+
+export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$HOME/bin:$PATH"
+export PATH="$HOME/.rbenv/bin:$PATH"
+export PATH="$HOME/.node_modules/bin:$PATH"
+#eval "$(rbenv init -)"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # alias to git for managing dot files
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+
+# Go Lang setup
+# export GOPATH=$HOME/apps/go
+# export PATH=$PATH:$GOPATH/bin
+
+# export ANDROID_HOME=/usr/local/opt/android-sdk
+
+# Load NPM_TOKEN
+if [ -f ~/.npm.env ]; then
+  source ~/.npm.env
+fi
+
+alias dcc='docker-compose'
+alias dccr='docker-compose rm -f'
+alias dcr='docker-compose run --rm'
+alias dce='docker-compose exec'
+alias dcb='docker-compose build --pull'
+alias dclean='docker rmi $(docker images -f "dangling=true" -q)'
+alias dprune='docker system prune -af --volumes'
+alias dccrriseapi='dccr app accounts-events accounts-jobs accounts-jobs-ui accounts-rest customer-api graphql jobs jobs-ui lrs'
+
+alias artRiseStage='art -on rise-stage '
+alias ardc='artRiseStage docker-compose '
+alias ardr='ardc run --rm '
+alias arde='ardc exec '
+
+alias uuid="uuidgen | tr -d '\n' | pbcopy"
+alias uuid2="uuidgen | tr -d '\n'"
+
+alias ngrok-id='ngrok http --host-header=rewrite --subdomain kstewart-id-dev id-mapper.dev.articulate.zone:80'
+
+alias dev='sh ~/.tmux/sh/dev.sh'
+
+alias upload-file='curl -H "Content-Type: application/zip" -v --upload-file '
+
+alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME/'
+
+alias startvpn='sudo nmcli connection up articulate --ask'
+
+alias vim='nvim'
+
+function gpr() {
+  git push origin HEAD
+
+  if [ $? -eq 0 ]; then
+    github_url=`git remote -v | awk '/fetch/{print $2}' | sed -Ee 's#(git@|git://)#http://#' -e 's@com:@com/@' -e 's%\.git$%%'`;
+    branch_name=`git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3`;
+    pr_url=$github_url"/compare/master..."$branch_name
+    chromium $pr_url;
+  else
+    echo 'failed to push commits and open a pull request.';
+  fi
+}
+
+alias pbcopy="xclip -selection c"
+alias pbpaste="xclip -selection clipboard -o"
+
+export npm_config_prefix=~/.node_modules
+
+# Turn off history sharing between terminals
+unsetopt share_history
+
+### QEMU virtual machines
+#alias startwindows10="qemu-system-x86_64 -drive file=windows10,format=qcow2 -m 4G -enable-kvm -cpu host"
+alias startwindows10="qemu-system-x86_64 -boot order=d -drive file=windows10,format=raw -m 4G -enable-kvm -cpu host -vga qxl"
+alias startmanji3="qemu-system-x86_64 -boot order=d -drive file=manjaro-i3,format=raw -m 4G -enable-kvm -cpu host -vga qxl"
+#-vga none -device qxl-vga,vgamem_mb=32
+                      #qemu-system-x86_64 -cdrom  ~/Downloads/manjaro-i3-18.1.5-191229-linux54.iso -boot order=d -drive file=disk_image,format=raw -m 2G -enable-kvm -cpu host -vga qxl
