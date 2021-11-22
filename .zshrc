@@ -155,7 +155,8 @@ alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME/'
 
 alias startvpn='sudo nmcli connection up articulate --ask'
 
-alias vim='nvim'
+alias nvim='nvim.appimage '
+alias vim='nvim '
 
 function gpr() {
   git push origin HEAD
