@@ -1,12 +1,38 @@
+" Things to setup
+" - go to definition (gd) needs to be set up
+"
+" -- Treesitter
+" :TSInstall css dockerfile html javascript json lua typescript vim
+
+"
+" -- LSP: language servers
+"   npm install -g typescript typescript-language-server vscode-langservers-extracted dockerfile-language-server-nodejs
+
+" -- HTML / CSS / JSON / ESLINT vscode language servers
+" -- https://github.com/hrsh7th/vscode-langservers-extracted
+" -- npm i -g vscode-langservers-extracted
+"
+" -- TYPESCRIPT / JAVASCRIPT
+" -- https://github.com/typescript-language-server/typescript-language-server
+" -- npm install -g typescript typescript-language-server
+"
+" -- DOCKERFILE
+" -- https://github.com/rcjsuen/dockerfile-language-server-nodejs
+" -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#dockerls
+" -- npm install -g dockerfile-language-server-nodejs
+" -- note: eslint lsp needs `eslint` package available
+
+
 set path+=**
 
+let mapleader=" "
+
 "Nice menu when typing `:find *.js`
-set wildmode=longest,list,full
-set wildmenu
+" set wildmode=longest,list,full
+" set wildmenu
 
 " Ignore files
 set wildignore+=**/node_modules/**
-
 
 set guicursor=
 set relativenumber
@@ -16,6 +42,7 @@ set noerrorbells
 set tabstop=2 softtabstop=2
 set shiftwidth=2
 set expandtab
+set autoindent
 set smartindent
 set nu
 set nowrap
@@ -27,6 +54,7 @@ set incsearch
 set termguicolors
 set scrolloff=8
 " set noshowmode
+" set signcolumn=number
 set signcolumn=yes
 set isfname+=@-@
 " set ls=0
@@ -35,7 +63,7 @@ set isfname+=@-@
 set clipboard=unnamedplus
 
 " Give more space for displaying messages.
-set cmdheight=1
+set cmdheight=2
 
 " Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
 " delays and poor user experience.
@@ -53,45 +81,182 @@ set splitright
 
 call plug#begin(stdpath('data') . '/plugged')
 
-Plug 'neovim/nvim-lspconfig'
-Plug 'hrsh7th/nvim-cmp'
-Plug 'hrsh7th/cmp-buffer'
-Plug 'hrsh7th/cmp-nvim-lsp'
-"Plug 'tckmn/vim-minisnip'
-Plug 'hrsh7th/cmp-vsnip'
-Plug 'hrsh7th/vim-vsnip'
-"Plug 'glepnir/lspsaga.nvim'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
-"Plug 'nvim-lua/completion-nvim'
-Plug 'nvim-treesitter/nvim-treesitter'
-"Plug 'nvim-treesitter/completion-treesitter'
-Plug 'nvim-treesitter/playground'
+Plug 'neovim/nvim-lspconfig'
+
+" Completion
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/cmp-path'
+Plug 'hrsh7th/cmp-cmdline'
+Plug 'hrsh7th/nvim-cmp'
+
+"" Completion snipets - For vsnip users.
+Plug 'saadparwaiz1/cmp_luasnip'
+Plug 'L3MON4D3/LuaSnip'
 
 " Commenting
-Plug 'tpope/vim-commentary'
-Plug 'JoosepAlviste/nvim-ts-context-commentstring'
+" Plug 'tpope/vim-commentary'
+Plug 'numToStr/Comment.nvim'
 
-Plug 'shaunsingh/nord.nvim'
+
+" Plug 'shaunsingh/nord.nvim'
+" Plug 'altercation/vim-colors-solarized'
+Plug 'gruvbox-community/gruvbox'
 
 Plug 'phaazon/hop.nvim'
 
+" File finding
+Plug 'nvim-lua/plenary.nvim'
+Plug 'nvim-telescope/telescope.nvim'
+
+" File navigation
 Plug 'preservim/nerdtree'
 
 " Allows for seamless navigation between tmux and vim
 Plug 'christoomey/vim-tmux-navigator'
 
-Plug 'triglav/vim-visual-increment'
+" Git integration
+Plug 'tpope/vim-fugitive'
+Plug 'airblade/vim-gitgutter'
+
+" helper for surrounds
+Plug 'tpope/vim-surround'
+
+" Terraform highlighting
+Plug 'hashivim/vim-terraform'
 
 call plug#end()
 
-" Hop key bindings
-map s <cmd>HopChar1<CR>
-omap s v<cmd>HopChar1<CR>
+" Solarized color scheme
+" syntax enable
+" set background=dark
+" let g:solarized_termcolors=256
+" colorscheme solarized
 
-" NerdTree
-nnoremap <leader>n :NERDTreeToggle<CR>
+let g:gruvbox_contrast_dark='hard'
+colorscheme gruvbox
 
-lua require("colors")
-lua require("lsp-config")
-lua require("cmp-uha")
-lua require("commenting")
+" Find files using Telescope command-line sugar.
+nnoremap <leader>ff <cmd>Telescope find_files<cr>
+nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+nnoremap <leader>fb <cmd>Telescope buffers<cr>
+nnoremap <leader>fh <cmd>Telescope help_tags<cr>
+nnoremap <leader>fr <cmd>Telescope resume<cr>
+
+" Telescope setup
+" Issue: does not find hidden files currently
+
+" Comment.nvim setup
+lua require('Comment').setup()
+
+" Hop setup
+lua require('hop').setup()
+
+nnoremap s <cmd>HopChar1<CR>
+onoremap s v<cmd>HopChar1<CR>
+" nnoremap f <cmd>HopWord<CR>
+" onoremap f v<cmd>HopWord<CR>
+
+"
+" LSP
+"
+fun! LspLocationList()
+    " lua vim.lsp.diagnostic.set_loclist({open_loclist = false})
+endfun
+
+" TODO: There may be some tweeking needed here...
+nnoremap <leader>vd :lua vim.lsp.buf.definition()<CR>
+nnoremap <leader>vi :lua vim.lsp.buf.implementation()<CR>
+nnoremap <leader>vsh :lua vim.lsp.buf.signature_help()<CR>
+nnoremap <leader>vrr :lua vim.lsp.buf.references()<CR>
+nnoremap <leader>vrn :lua vim.lsp.buf.rename()<CR>
+nnoremap <leader>vh :lua vim.lsp.buf.hover()<CR>
+nnoremap <leader>vca :lua vim.lsp.buf.code_action()<CR>
+nnoremap <leader>vsd :lua vim.lsp.diagnostic.show_line_diagnostics(); vim.lsp.util.show_line_diagnostics()<CR>
+nnoremap <leader>vn :lua vim.lsp.diagnostic.goto_next()<CR>
+nnoremap <leader>vll :call LspLocationList()<CR>
+
+lua <<EOF
+  local lspconfig = require 'lspconfig'
+
+  --Enable (broadcasting) snippet capability for completion
+  local capabilities = vim.lsp.protocol.make_client_capabilities()
+  -- capabilities.textDocument.completion.completionItem.snippetSupport = true
+  capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+
+  lspconfig.html.setup{
+    capabilities = capabilities,
+  }
+
+  lspconfig.cssls.setup {
+    capabilities = capabilities,
+  }
+
+  lspconfig.jsonls.setup {
+    capabilities = capabilities,
+  }
+
+  lspconfig.tsserver.setup{
+    capabilities = capabilities,
+  }
+
+  lspconfig.dockerls.setup{
+    capabilities = capabilities,
+  }
+
+  lspconfig.terraformls.setup{
+    -- capabilities = capabilities,
+  }
+
+  -- Doesn't seem to be working.  Not sure if it's not finding the config or not
+  -- lspconfig.eslint.setup{
+  --   capabilities = capabilities,
+  -- }
+EOF
+
+"
+" nvim-cmp
+"
+lua <<EOF
+  local luasnip = require "luasnip"
+  local cmp = require "cmp"
+
+  cmp.setup({
+    mapping = {
+      ['<C-p>'] = cmp.mapping(cmp.mapping.select_prev_item(), { 'i', 'c' }),
+      ['<C-n>'] = cmp.mapping(cmp.mapping.select_next_item(), { 'i', 'c' }),
+      ['<C-d>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
+      ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
+      ['<C-e>'] = cmp.mapping({
+        i = cmp.mapping.abort(),
+        c = cmp.mapping.close(),
+      }),
+      ['<C-y>'] = cmp.mapping.confirm {
+        -- behavior = cmp.ConfirmBehavior.Insert,
+        select = true,
+      },
+      ['<C-space>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+    },
+
+    sources = cmp.config.sources({
+      { name = 'nvim_lsp' },
+      { name = 'path' },
+      { name = 'luasnip' },
+      { name = 'buffer', keyword_length = 4 },
+    }),
+
+    snippet = {
+      expand = function(args)
+        luasnip.lsp_expand(args.body)
+      end
+    },
+    
+    experimental = {
+      native_menu = true, -- native_menu is currently causing issues with undo.  something todo with floating windows
+                          -- https://github.com/hrsh7th/nvim-cmp/issues/328
+      ghost_text = true,
+    }
+  })
+EOF
