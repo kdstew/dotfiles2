@@ -6,7 +6,7 @@
 
 "
 " -- LSP: language servers
-"   npm install -g typescript typescript-language-server vscode-langservers-extracted dockerfile-language-server-nodejs
+"   npm install -g typescript typescript-language-server vscode-langservers-extracted dockerfile-language-server-nodejs vls eslint_d prettier
 
 " -- HTML / CSS / JSON / ESLINT vscode language servers
 " -- https://github.com/hrsh7th/vscode-langservers-extracted
@@ -20,7 +20,6 @@
 " -- https://github.com/rcjsuen/dockerfile-language-server-nodejs
 " -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#dockerls
 " -- npm install -g dockerfile-language-server-nodejs
-" -- note: eslint lsp needs `eslint` package available
 
 
 set path+=**
@@ -84,6 +83,8 @@ call plug#begin(stdpath('data') . '/plugged')
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
 Plug 'neovim/nvim-lspconfig'
+Plug 'jose-elias-alvarez/null-ls.nvim'
+Plug 'jose-elias-alvarez/nvim-lsp-ts-utils'
 
 " Completion
 Plug 'hrsh7th/cmp-nvim-lsp'
@@ -129,6 +130,16 @@ Plug 'hashivim/vim-terraform'
 
 call plug#end()
 
+nnoremap <leader>e <cmd>NERDTreeToggle<cr>
+
+" Moving line up/down & selected lines up/down
+nnoremap <A-j> :m .+1<CR>==
+nnoremap <A-k> :m .-2<CR>==
+inoremap <A-j> <Esc>:m .+1<CR>==gi
+inoremap <A-k> <Esc>:m .-2<CR>==gi
+vnoremap <A-j> :m '>+1<CR>gv=gv
+vnoremap <A-k> :m '<-2<CR>gv=gv
+
 " Solarized color scheme
 " syntax enable
 " set background=dark
@@ -163,7 +174,7 @@ onoremap s v<cmd>HopChar1<CR>
 " LSP
 "
 fun! LspLocationList()
-    " lua vim.lsp.diagnostic.set_loclist({open_loclist = false})
+    lua vim.diagnostic.setloclist({open_loclist = false})
 endfun
 
 " TODO: There may be some tweeking needed here...
@@ -174,16 +185,50 @@ nnoremap <leader>vrr :lua vim.lsp.buf.references()<CR>
 nnoremap <leader>vrn :lua vim.lsp.buf.rename()<CR>
 nnoremap <leader>vh :lua vim.lsp.buf.hover()<CR>
 nnoremap <leader>vca :lua vim.lsp.buf.code_action()<CR>
-nnoremap <leader>vsd :lua vim.lsp.diagnostic.show_line_diagnostics(); vim.lsp.util.show_line_diagnostics()<CR>
-nnoremap <leader>vn :lua vim.lsp.diagnostic.goto_next()<CR>
+nnoremap <leader>vsd :lua vim.diagnostic.open_float()<CR>
+nnoremap <leader>vn :lua vim.diagnostic.goto_next()<CR>
+nnoremap <leader>vp :lua vim.diagnostic.goto_prev()<CR>
 nnoremap <leader>vll :call LspLocationList()<CR>
 
 lua <<EOF
+  local buf_map = function(bufnr, mode, lhs, rhs, opts)
+      vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts or {
+          silent = true,
+      })
+  end
+
+  local on_attach = function(client, bufnr)
+      vim.cmd("command! LspDef lua vim.lsp.buf.definition()")
+      vim.cmd("command! LspFormatting lua vim.lsp.buf.formatting()")
+      vim.cmd("command! LspCodeAction lua vim.lsp.buf.code_action()")
+      vim.cmd("command! LspHover lua vim.lsp.buf.hover()")
+      vim.cmd("command! LspRename lua vim.lsp.buf.rename()")
+      vim.cmd("command! LspRefs lua vim.lsp.buf.references()")
+      vim.cmd("command! LspTypeDef lua vim.lsp.buf.type_definition()")
+      vim.cmd("command! LspImplementation lua vim.lsp.buf.implementation()")
+      vim.cmd("command! LspDiagPrev lua vim.diagnostic.goto_prev()")
+      vim.cmd("command! LspDiagNext lua vim.diagnostic.goto_next()")
+      vim.cmd("command! LspDiagLine lua vim.diagnostic.open_float()")
+      vim.cmd("command! LspSignatureHelp lua vim.lsp.buf.signature_help()")
+      --buf_map(bufnr, "n", "gd", ":LspDef<CR>")
+      --buf_map(bufnr, "n", "gr", ":LspRename<CR>")
+      --buf_map(bufnr, "n", "gy", ":LspTypeDef<CR>")
+      buf_map(bufnr, "n", "K", ":LspHover<CR>")
+      --buf_map(bufnr, "n", "[a", ":LspDiagPrev<CR>")
+      --buf_map(bufnr, "n", "]a", ":LspDiagNext<CR>")
+      --buf_map(bufnr, "n", "ga", ":LspCodeAction<CR>")
+      buf_map(bufnr, "n", "<Leader>a", ":LspDiagLine<CR>")
+      --buf_map(bufnr, "i", "<C-x><C-x>", "<cmd> LspSignatureHelp<CR>")
+      --if client.resolved_capabilities.document_formatting then
+      --    vim.cmd("autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()")
+      --end
+  end
+
   local lspconfig = require 'lspconfig'
 
   --Enable (broadcasting) snippet capability for completion
   local capabilities = vim.lsp.protocol.make_client_capabilities()
-  -- capabilities.textDocument.completion.completionItem.snippetSupport = true
+  capabilities.textDocument.completion.completionItem.snippetSupport = true
   capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
   lspconfig.html.setup{
@@ -200,6 +245,18 @@ lua <<EOF
 
   lspconfig.tsserver.setup{
     capabilities = capabilities,
+    on_attach = function(client, bufnr)
+        client.resolved_capabilities.document_formatting = false
+        client.resolved_capabilities.document_range_formatting = false
+        local ts_utils = require("nvim-lsp-ts-utils")
+        ts_utils.setup({})
+        ts_utils.setup_client(client)
+        -- confirm these are keyboinds I want
+        buf_map(bufnr, "n", "gs", ":TSLspOrganize<CR>")
+        buf_map(bufnr, "n", "gi", ":TSLspRenameFile<CR>")
+        buf_map(bufnr, "n", "go", ":TSLspImportAll<CR>")
+        on_attach(client, bufnr)
+    end,
   }
 
   lspconfig.dockerls.setup{
@@ -210,10 +267,23 @@ lua <<EOF
     -- capabilities = capabilities,
   }
 
-  -- Doesn't seem to be working.  Not sure if it's not finding the config or not
-  -- lspconfig.eslint.setup{
-  --   capabilities = capabilities,
-  -- }
+
+  lspconfig.vuels.setup{
+    capabilities = capabilities,
+  }
+
+  --
+  -- null-ls
+  --
+  local null_ls = require("null-ls")
+  null_ls.setup({
+      sources = {
+          null_ls.builtins.diagnostics.eslint_d,
+          null_ls.builtins.code_actions.eslint_d,
+          null_ls.builtins.formatting.prettier
+      },
+      on_attach = on_attach
+  })
 EOF
 
 "

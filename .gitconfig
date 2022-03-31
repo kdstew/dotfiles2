@@ -3,3 +3,7 @@
 	email = kdstew@gmail.com
 [pull]
 	ff = only
+[alias]
+  pf = push --force-with-lease
+[core]
+	excludesFile = ~/.gitignore
