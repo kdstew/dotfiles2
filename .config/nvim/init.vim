@@ -323,9 +323,11 @@ lua <<EOF
       end
     },
     
+    -- view = {
+    --   entries = "native"
+    -- },
+    
     experimental = {
-      native_menu = true, -- native_menu is currently causing issues with undo.  something todo with floating windows
-                          -- https://github.com/hrsh7th/nvim-cmp/issues/328
       ghost_text = true,
     }
   })
