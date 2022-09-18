@@ -23,6 +23,9 @@ alias atdc='art360Stage docker-compose '
 alias atdr='atdc run --rm '
 alias atde='atde exec '
 
+# watch a deployment
+alias awd='art -on 360-prod kubectl rollout status deployment rise-360-gateway-rest'
+
 alias uuid="uuidgen | tr -d '\n' | pbcopy"
 alias uuid2="uuidgen | tr -d '\n'"
 
