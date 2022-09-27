@@ -4,22 +4,30 @@ export EDITOR=nvim
 export GOPATH=$HOME/apps/go
 export PATH=$PATH:$GOPATH/bin
 
-alias dcc='docker-compose'
-alias dccr='docker-compose rm -f'
-alias dcr='docker-compose run --rm'
-alias dce='docker-compose exec'
-alias dcb='docker-compose build --pull'
+function _dockerCompose {
+  if command -v docker-compose
+  then
+    docker-compose $*
+  else
+    docker compose $*
+  fi
+}
+alias dcc='_dockerCompose'
+alias dccr='_dockerCompose rm -f'
+alias dcr='_dockerCompose run --rm'
+alias dce='_dockerCompose exec'
+alias dcb='_dockerCompose build --pull'
 alias dclean='docker rmi $(docker images -f "dangling=true" -q)'
 alias dprune='docker system prune -af --volumes'
 alias dccrriseapi='dccr app accounts-events accounts-jobs accounts-jobs-ui accounts-rest customer-api graphql jobs jobs-ui lrs'
 
 alias artRiseStage='art -on rise-stage '
-alias ardc='artRiseStage docker-compose '
+alias ardc='artRiseStage _dockerCompose '
 alias ardr='ardc run --rm '
 alias arde='ardc exec '
 
 alias art360Stage='art -on 360-stage '
-alias atdc='art360Stage docker-compose '
+alias atdc='art360Stage _dockerCompose '
 alias atdr='atdc run --rm '
 alias atde='atde exec '
 
