@@ -14,12 +14,12 @@ alias dprune='docker system prune -af --volumes'
 alias dccrriseapi='dccr app accounts-events accounts-jobs accounts-jobs-ui accounts-rest customer-api graphql jobs jobs-ui lrs'
 
 alias artRiseStage='art --on rise-stage '
-alias ardc="artRiseStage docker-compose "
+alias ardc="artRiseStage docker compose "
 alias ardr='ardc run -- --rm '
 alias arde='ardc exec '
 
 alias art360Stage='art --on 360-stage '
-alias atdc='art360Stage docker-compose '
+alias atdc='art360Stage docker compose '
 alias atdr='atdc run -- --rm '
 alias atde='atde exec '
 
@@ -70,7 +70,7 @@ fi
 
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME/'
 
-alias startvpn='sudo nmcli connection up articulate --ask'
+alias startvpn='sudo tailscale up --accept-routes'
 
 export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$HOME/bin:$PATH"
 export PATH="$HOME/.rbenv/bin:/home/kevin/.local/share/gem/ruby/3.0.0/bin:$PATH"
