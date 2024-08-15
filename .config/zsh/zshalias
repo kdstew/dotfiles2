@@ -4,41 +4,36 @@ export EDITOR=nvim
 export GOPATH=$HOME/apps/go
 export PATH=$PATH:$GOPATH/bin
 
-function _dockerCompose {
-  if command -v docker-compose
-  then
-    docker-compose $*
-  else
-    docker compose $*
-  fi
-}
-alias dcc='_dockerCompose'
-alias dccr='_dockerCompose rm -f'
-alias dcr='_dockerCompose run --rm'
-alias dce='_dockerCompose exec'
-alias dcb='_dockerCompose build --pull'
+alias dcc='docker-compose '
+alias dccr='docker-compose rm -f '
+alias dcr='docker-compose run --rm '
+alias dce='docker-compose exec '
+alias dcb='docker-compose build --pull'
 alias dclean='docker rmi $(docker images -f "dangling=true" -q)'
 alias dprune='docker system prune -af --volumes'
 alias dccrriseapi='dccr app accounts-events accounts-jobs accounts-jobs-ui accounts-rest customer-api graphql jobs jobs-ui lrs'
 
-alias artRiseStage='art -on rise-stage '
-alias ardc='artRiseStage _dockerCompose '
-alias ardr='ardc run --rm '
+alias artRiseStage='art --on rise-stage '
+alias ardc="artRiseStage docker-compose "
+alias ardr='ardc run -- --rm '
 alias arde='ardc exec '
 
-alias art360Stage='art -on 360-stage '
-alias atdc='art360Stage _dockerCompose '
-alias atdr='atdc run --rm '
+alias art360Stage='art --on 360-stage '
+alias atdc='art360Stage docker-compose '
+alias atdr='atdc run -- --rm '
 alias atde='atde exec '
 
 # watch a deployment
-alias awd='art -on 360-prod kubectl rollout status deployment rise-360-gateway-rest'
+alias awd='art --on 360-prod kubectl rollout status deployment rise-360-gateway-rest'
 
 alias uuid="uuidgen | tr -d '\n' | pbcopy"
 alias uuid2="uuidgen | tr -d '\n'"
 
 #alias ngrok-id='ngrok http --host-header=rewrite id.dev.articulate.zone:80'
 alias ngrok-id='ngrok http --host-header=rewrite --subdomain kstewart-id-dev id-mapper.dev.articulate.zone:80'
+# alias ngrok-ai='ngrok http --host-header=rewrite --subdomain kstewart-id-dev id-mapper.dev.articulate.zone:80'
+alias ngrok-ai='ngrok http --host-header=rewrite --domain=kstewart-ai-connect.ngrok.io ai-connect.dev.articulate.zone:80'
+# docker run -it -e NGROK_AUTHTOKEN=3nm9sbambg4JH7gDQ4468_95QdFQqSczYwmY7DhEZE ngrok/ngrok http 80 --domain=kstewart-ai-connect.ngrok.io
 
 alias dev='sh ~/.tmux/sh/dev.sh '
 alias devsubtask='cd ~/source/subtask/subtask && dev'
@@ -52,7 +47,13 @@ export ANDROID_HOME=/usr/local/opt/android-sdk
 
 alias upload-file='curl -H "Content-Type: application/zip" -v --upload-file '
 
-alias fix-audio='systemctl --user restart pulseaudio'
+alias fix-audio='systemctl --user restart pipewire.service'
+
+# alias vpnup='nmcli con up id art-vpn'
+# alias vpndown='nmcli con down id art-vpn'
+alias vpnup='sudo tailscale up --accept-routes'
+alias vpndown='sudo tailscale down'
+
 
 #export AWS_FUZZ_USER="kstewart"
 #alias aws-fuzzy-prod="AWS_DEFAULT_PROFILE=prod aws-fuzzy"
@@ -60,6 +61,11 @@ alias fix-audio='systemctl --user restart pulseaudio'
 # Load NPM_TOKEN
 if [ -f ~/.npm.env ]; then
   source ~/.npm.env
+fi
+
+# Load FONT_AWESOME_NPM_AUTH_TOKEN
+if [ -f ~/.font-awesome.env ]; then
+  source ~/.font-awesome.env
 fi
 
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME/'
@@ -105,3 +111,47 @@ alias startmanji3="qemu-system-x86_64 -boot order=d -drive file=manjaro-i3,forma
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+function disableReview() {
+  # for 360-review-sockets.articulate.zone & 360-review-sockets.360.stage.art-internal.com
+  sudo iptables -I INPUT -s  3.230.73.102 -j DROP
+  sudo iptables -I OUTPUT -d 3.230.73.102 -j DROP
+  sudo iptables -I INPUT -s  34.237.18.144 -j DROP
+  sudo iptables -I OUTPUT -d 34.237.18.144 -j DROP
+  sudo iptables -I INPUT -s  52.6.84.13 -j DROP
+  sudo iptables -I OUTPUT -d 52.6.84.13 -j DROP
+  sudo iptables -I INPUT -s  54.88.183.205 -j DROP
+  sudo iptables -I OUTPUT -d 54.88.183.205 -j DROP
+  sudo iptables -I INPUT -s  3.209.176.183 -j DROP
+  sudo iptables -I OUTPUT -d 3.209.176.183 -j DROP
+
+  # sudo iptables -I INPUT -s  10.156.156.1 -j DROP
+  # sudo iptables -I OUTPUT -d 10.156.156.1 -j DROP
+}
+
+function enableReview() {
+  # for 360-review-sockets.articulate.zone & 360-review-sockets.360.stage.art-internal.com
+  sudo iptables -D INPUT -s  3.230.73.102 -j DROP
+  sudo iptables -D OUTPUT -d 3.230.73.102 -j DROP
+  sudo iptables -D INPUT -s  34.237.18.144 -j DROP
+  sudo iptables -D OUTPUT -d 34.237.18.144 -j DROP
+  sudo iptables -D INPUT -s  52.6.84.13 -j DROP
+  sudo iptables -D OUTPUT -d 52.6.84.13 -j DROP
+  sudo iptables -D INPUT -s  54.88.183.205 -j DROP
+  sudo iptables -D OUTPUT -d 54.88.183.205 -j DROP
+  sudo iptables -D INPUT -s  3.209.176.183 -j DROP
+  sudo iptables -D OUTPUT -d 3.209.176.183 -j DROP
+
+  # sudo iptables -D INPUT -s  10.156.156.1 -j DROP
+  # sudo iptables -D OUTPUT -d 10.156.156.1 -j DROP
+}
+
+
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+# Load pyenv-virtualenv automatically by adding
+# the following to ~/.bashrc:
+
+eval "$(pyenv virtualenv-init -)"

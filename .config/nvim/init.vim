@@ -1,12 +1,13 @@
-" Things to setup
-" - go to definition (gd) needs to be set up
-"
 " -- Treesitter
 " :TSInstall css dockerfile html javascript json lua typescript vim
 
 "
 " -- LSP: language servers
-"   npm install -g typescript typescript-language-server vscode-langservers-extracted dockerfile-language-server-nodejs vls eslint_d prettier
+"   npm install -g typescript typescript-language-server vscode-langservers-extracted dockerfile-language-server-nodejs vls eslint_d prettier svelte-language-server
+"   npm install -g @volar/vue-language-server
+"   terraform-ls
+"     - add hashicorp to yum repos: https://www.hashicorp.com/official-packaging-guide
+"     - sudo dnf install terraform-ls
 
 " -- HTML / CSS / JSON / ESLINT vscode language servers
 " -- https://github.com/hrsh7th/vscode-langservers-extracted
@@ -81,6 +82,7 @@ set splitright
 call plug#begin(stdpath('data') . '/plugged')
 
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'nvim-treesitter/nvim-treesitter-context'
 
 Plug 'neovim/nvim-lspconfig'
 Plug 'jose-elias-alvarez/null-ls.nvim'
@@ -107,6 +109,7 @@ Plug 'numToStr/Comment.nvim'
 " Plug 'shaunsingh/nord.nvim'
 " Plug 'altercation/vim-colors-solarized'
 Plug 'gruvbox-community/gruvbox'
+Plug 'luisiacc/gruvbox-baby', {'branch': 'main'}
 
 Plug 'phaazon/hop.nvim'
 
@@ -116,6 +119,7 @@ Plug 'nvim-telescope/telescope.nvim'
 
 " File navigation
 Plug 'preservim/nerdtree'
+Plug 'ThePrimeagen/harpoon'
 
 " Allows for seamless navigation between tmux and vim
 Plug 'christoomey/vim-tmux-navigator'
@@ -129,6 +133,15 @@ Plug 'tpope/vim-surround'
 
 " Terraform highlighting
 Plug 'hashivim/vim-terraform'
+
+Plug 'tpope/vim-abolish'
+
+" Plug 'Glench/Vim-Jinja2-Syntax'
+Plug 'tree-sitter/tree-sitter-embedded-template'
+
+Plug 'github/copilot.vim'
+
+Plug 'AndrewRadev/splitjoin.vim'
 
 call plug#end()
 
@@ -152,11 +165,14 @@ noremap Zo <c-w>=
 " let g:solarized_termcolors=256
 " colorscheme solarized
 
-let g:gruvbox_contrast_dark='hard'
-colorscheme gruvbox
+" let g:gruvbox_contrast_dark='hard'
+" colorscheme gruvbox
+
+let g:gruvbox_baby_background_color='dark'
+colorscheme gruvbox-baby
 
 " Find files using Telescope command-line sugar.
-nnoremap <leader>ff <cmd>Telescope find_files<cr>
+nnoremap <leader>ff <cmd>Telescope find_files hidden=true<cr>
 nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
@@ -195,8 +211,63 @@ nnoremap <leader>vsd :lua vim.diagnostic.open_float()<CR>
 nnoremap <leader>vn :lua vim.diagnostic.goto_next()<CR>
 nnoremap <leader>vp :lua vim.diagnostic.goto_prev()<CR>
 nnoremap <leader>vll :call LspLocationList()<CR>
+nnoremap gD :vsplit<CR>gd
+
+" nnoremap <c-p> :bprev<CR>
+" nnoremap <c-n> :bnext<CR>
+
+" Harpoon keymaps
+lua <<EOF
+  local harpoon_mark = require("harpoon.mark")
+  local harpoon_ui = require("harpoon.ui")
+
+  vim.keymap.set("n", "<leader>a", harpoon_mark.add_file)
+  vim.keymap.set("n", "<C-s>", harpoon_ui.toggle_quick_menu)
+
+  vim.keymap.set("n", "<leader>1", function() harpoon_ui.nav_file(1) end)
+  vim.keymap.set("n", "<leader>2", function() harpoon_ui.nav_file(2) end)
+  vim.keymap.set("n", "<leader>3", function() harpoon_ui.nav_file(3) end)
+  vim.keymap.set("n", "<leader>4", function() harpoon_ui.nav_file(4) end)
+EOF
 
 lua <<EOF
+  require'nvim-treesitter.configs'.setup {
+    -- A list of parser names, or "all" (the five listed parsers should always be installed)
+    ensure_installed = { "css", "dockerfile", "help", "html", "javascript", "json", "lua", "svelte", "typescript", "vim"},
+
+    -- Install parsers synchronously (only applied to `ensure_installed`)
+    sync_install = false,
+
+    -- Automatically install missing parsers when entering buffer
+    -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
+    auto_install = true,
+
+    highlight = {
+      enable = true,
+
+      -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+      -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+      -- Using this option may slow down your editor, and you may see some duplicate highlights.
+      -- Instead of true it can also be a list of languages
+      additional_vim_regex_highlighting = false,
+    },
+  }
+
+
+  local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
+  parser_config.tree_sitter_embedded_template = {
+    install_info = {
+      url = "~/.local/share/nvim/plugged/tree-sitter-embedded-template", -- local path or git repo
+      files = {"src/parser.c"}, -- note that some parsers also require src/scanner.c or src/scanner.cc
+      -- optional entries:
+      -- branch = "main", -- default branch in case of git repo if different from master
+      -- generate_requires_npm = false, -- if stand-alone parser without npm dependencies
+      -- requires_generate_from_grammar = false, -- if folder contains pre-generated src/parser.c
+    },
+    filetype = "ejs", -- if filetype does not match the parser name
+  }
+
+
   local buf_map = function(bufnr, mode, lhs, rhs, opts)
       vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts or {
           silent = true,
@@ -223,7 +294,7 @@ lua <<EOF
       --buf_map(bufnr, "n", "[a", ":LspDiagPrev<CR>")
       --buf_map(bufnr, "n", "]a", ":LspDiagNext<CR>")
         buf_map(bufnr, "n", "ga", ":LspCodeAction<CR>")
-      buf_map(bufnr, "n", "<Leader>a", ":LspDiagLine<CR>")
+      -- buf_map(bufnr, "n", "<Leader>a", ":LspDiagLine<CR>")
         buf_map(bufnr, "i", "<C-x><C-x>", "<cmd> LspSignatureHelp<CR>")
       --if client.resolved_capabilities.document_formatting then
       --    vim.cmd("autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()")
@@ -235,7 +306,7 @@ lua <<EOF
   --Enable (broadcasting) snippet capability for completion
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   capabilities.textDocument.completion.completionItem.snippetSupport = true
-  capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+  capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
   lspconfig.html.setup{
     capabilities = capabilities,
@@ -252,8 +323,8 @@ lua <<EOF
   lspconfig.tsserver.setup{
     capabilities = capabilities,
     on_attach = function(client, bufnr)
-        client.resolved_capabilities.document_formatting = false
-        client.resolved_capabilities.document_range_formatting = false
+        client.server_capabilities.document_formatting = false
+        client.server_capabilities.document_range_formatting = false
 
         local ts_utils = require("nvim-lsp-ts-utils")
         ts_utils.setup({})
@@ -276,7 +347,23 @@ lua <<EOF
   }
 
 
-  lspconfig.vuels.setup{
+  -- lspconfig.vuels.setup{
+  --   capabilities = capabilities,
+  -- }
+  lspconfig.volar.setup{
+    filetypes = {'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue', 'json'},
+    capabilities = capabilities,
+  }
+
+  lspconfig.gopls.setup{
+    capabilities = capabilities,
+  }
+
+  lspconfig.svelte.setup{
+    capabilities = capabilities,
+  }
+
+  lspconfig.pyright.setup{
     capabilities = capabilities,
   }
 
@@ -302,6 +389,21 @@ lua <<EOF
       },
       on_attach = on_attach
   })
+
+  require'treesitter-context'.setup{
+    enable = true, -- Enable this plugin (Can be enabled/disabled later via commands)
+    max_lines = 1, -- How many lines the window should span. Values <= 0 mean no limit.
+    min_window_height = 0, -- Minimum editor window height to enable context. Values <= 0 mean no limit.
+    line_numbers = true,
+    multiline_threshold = 20, -- Maximum number of lines to show for a single context
+    trim_scope = 'outer', -- Which context lines to discard if `max_lines` is exceeded. Choices: 'inner', 'outer'
+    mode = 'cursor',  -- Line used to calculate context. Choices: 'cursor', 'topline'
+    -- Separator between context and content. Should be a single character string, like '-'.
+    -- When separator is set, the context will only show up when there are at least 2 lines above cursorline.
+    separator = '-',
+    zindex = 20, -- The Z-index of the context window
+    on_attach = nil, -- (fun(buf: integer): boolean) return false to disable attaching
+  }
 EOF
 
 "

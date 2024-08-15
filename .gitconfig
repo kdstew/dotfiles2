@@ -1,9 +1,14 @@
 [user]
 	name = Kevin Stewart
 	email = kdstew@gmail.com
+	signingkey = /home/kevin/.ssh/id_ed25519.pub
 [pull]
 	ff = only
 [alias]
   pf = push --force-with-lease
 [core]
 	excludesFile = ~/.gitignore
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
